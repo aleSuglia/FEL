@@ -5,11 +5,7 @@
 package com.yahoo.semsearch.fastlinking;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import com.google.common.collect.Iterators;
 import com.yahoo.semsearch.fastlinking.utils.EntityLinkingUtils;
@@ -57,14 +53,13 @@ public class CoherentEntityLinkerWrapper {
      * @return an ordered list of wikis (best to worst) for that entity.
      */
     private List<EntityResult> getWikiCandidates(String query) {
-        List<FastEntityLinker.EntityResult> felCandidates =
+        Set<FastEntityLinker.EntityResult> felCandidates =
             fastEntityLinker.getResultsGreedy(query, this.numCandidatesToRetrieve);
 
-        List<EntityResult> candidates = felCandidates.stream().map(felResult -> {
+        return felCandidates.stream().map(felResult -> {
             String wikiId = EntityLinkingUtils.hexadecimalToChar(felResult.text.toString());
             return new EntityResult(wikiId, felResult.score, felResult.type);
         }).collect(toList());
-        return candidates;
     }
 
 

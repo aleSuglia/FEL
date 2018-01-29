@@ -17,6 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -106,7 +107,7 @@ public class EntityContextFastEntityLinker extends FastEntityLinker {
             if( q.length() == 0 ) continue;
             long time = -System.nanoTime();
             try {
-                List<EntityResult> results = linker.getResults( q, threshold );
+                Set<EntityResult> results = linker.getResults( q, threshold );
                 //List<EntityResult> results = linker.getResultsGreedy( q, 5 );
                 //int rank = 0;
 

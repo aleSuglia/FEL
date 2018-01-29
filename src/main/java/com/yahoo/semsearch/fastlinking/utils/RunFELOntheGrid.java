@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.io.BinIO;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -75,9 +76,9 @@ public class RunFELOntheGrid extends Configured implements Tool {
             String q = parts[ parts.length - 1 ];
             q = Normalize.normalize( q ); //we're doing this twice
             q = q.replaceAll( "\\+", " " ).toLowerCase();
-            List<EntityResult> results = fel.getResults( q, threshold );
+            Set<EntityResult> results = fel.getResults( q, threshold );
             if( results.size() > 0 ) {
-                EntityResult res = results.get( 0 );
+                EntityResult res = results.iterator().next();
                 String typeofEntity = entity2Id.get( ( ( EntitySpan ) res.s ).e.type );
                 if( typeofEntity == null ) typeofEntity = "NF";
                 String intentPart = Normalize.getIntentPart( q, res.text.toString() );

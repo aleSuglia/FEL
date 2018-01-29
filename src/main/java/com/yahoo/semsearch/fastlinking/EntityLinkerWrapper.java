@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.io.BinIO;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by aasishkp on 9/30/15.
@@ -56,7 +57,7 @@ public class EntityLinkerWrapper {
         //List<String> strResults = new ArrayList<String>();
         StringBuilder strResults = new StringBuilder("");
 
-        List<FastEntityLinker.EntityResult> results = null;
+        Set<FastEntityLinker.EntityResult> results = null;
         if (linker != null) {
             results = this.linker.getResultsGreedy(query, (int) threshold);
         } else {
