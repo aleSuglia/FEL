@@ -6,6 +6,7 @@ package com.yahoo.semsearch.fastlinking;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import it.unimi.dsi.fastutil.io.BinIO;
 
 import java.io.BufferedReader;
@@ -56,7 +57,6 @@ public class FastEntityLinker {
 
     /**
      * No-args constructor for Kappa.
-     * 
      */
     protected FastEntityLinker() {
     }
@@ -476,15 +476,34 @@ public class FastEntityLinker {
         return res;
     }
 
-    public Multimap<Pair<Integer, Integer>, EntityScore> getResults(final String query) {
-        Multimap<Pair<Integer, Integer>, EntityScore> candidatesAnnotations = HashMultimap.create();
-        ArrayList<EntitySpan> spans = getBestChunking(query, this.ranker, this.context);
-
-        for (EntitySpan span : spans) {
-            Pair<Integer, Integer> spanOffset = Pair.of(span.getStartOffset(), span.getEndOffset());
-            candidatesAnnotations.put(spanOffset, new EntityScore(span.e, span.score));
+    public Multimap<Span, EntityScore> getResults(final String query, int candidatesPerSpot) {
+        Multimap<Span, EntityScore> candidatesAnnotations = TreeMultimap.create();
+        String parts[] = Normalize.normalize(query).split("\\s+");
+        final int l = parts.length;
+        ArrayList<String> ctxWords = new ArrayList<>();
+        Collections.addAll(ctxWords, parts);
+        context.setContextWords(ctxWords);
+        for (int i = 0; i < l; i++) {
+            StringBuilder text = new StringBuilder();
+            for (int j = i; j < l; j++) {
+                text.append(parts[j]);
+                CandidatesInfo infos = hash.getCandidatesInfo(text.toString());
+                if (infos != null) {
+                    Set<EntityScore> score = new TreeSet<>(
+                            ranker.getTopKEntities(
+                                    infos,
+                                    context,
+                                    query,
+                                    (j - i),
+                                    candidatesPerSpot
+                            )
+                    );
+                    Span span = new Span(text.toString(), i, j);
+                    candidatesAnnotations.putAll(span, score);
+                }
+                text.append(" ");
+            }
         }
-
         return candidatesAnnotations;
     }
 
@@ -518,17 +537,18 @@ public class FastEntityLinker {
 
             long time = -System.nanoTime();
             try {
-                Multimap<Pair<Integer, Integer>, EntityScore> results = fel.getResults(q);
+                System.out.println("-- Call to getResults()");
+                Multimap<Span, EntityScore> results = fel.getResults(q, 5);
 
-                for (Pair<Integer, Integer> offset : results.keys()) {
+                for (Span span : results.keySet()) {
                     System.out.println(String.format("Entity candidates for entity span (%d, %d): %s",
-                            offset.getKey(),
-                            offset.getValue(),
-                            q.substring(offset.getKey(), offset.getValue())
+                            span.getStartOffset(),
+                            span.getEndOffset(),
+                            span.getSpan()
                             )
                     );
 
-                    for (EntityScore score : results.get(offset)) {
+                    for (EntityScore score : results.get(span)) {
                         System.out.println(
                                 String.format(
                                         "text=%s, score=%g",
@@ -538,6 +558,7 @@ public class FastEntityLinker {
                         );
                     }
                 }
+
                 time += System.nanoTime();
                 System.out.println("Time to rank and print the candidates:" + time / 1000000. + " ms");
             } catch (Exception e) {

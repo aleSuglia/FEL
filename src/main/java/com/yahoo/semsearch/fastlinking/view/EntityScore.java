@@ -23,7 +23,10 @@ public class EntityScore implements Comparable<EntityScore>{
 	}
 	
 	@Override
-	public int compareTo( EntityScore o ) {	    
-	    return  -Double.compare(score, o.score );
+	public int compareTo( EntityScore o ) {
+	    if (o.entity.id == this.entity.id)
+	    	return 0;
+
+ 		return  -Double.compare(score, o.score );
 	}
   }
