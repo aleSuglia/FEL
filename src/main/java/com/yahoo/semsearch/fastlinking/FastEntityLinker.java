@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.yahoo.semsearch.fastlinking.entityranker.CandidateRanker;
 import com.yahoo.semsearch.fastlinking.entityranker.EntityRelevanceJudgment;
@@ -51,6 +52,7 @@ public class FastEntityLinker {
     private static final String[] STOPWORDS = new String[]{"wiki", "com", "www"};
     private static final Set<String> FILTER = new HashSet<String>(Arrays.asList(STOPWORDS));
     private double nilValueOne = -100;
+    private static final double ANNOTATION_THRESHOLD = -5;
     private final Entity nilEntity = new Entity(-1);
     private EntityScore nilCandidate = new EntityScore(nilEntity, nilValueOne);
     private final Entity[] emptyEntities = new Entity[0];
@@ -489,17 +491,17 @@ public class FastEntityLinker {
                 text.append(parts[j]);
                 CandidatesInfo infos = hash.getCandidatesInfo(text.toString());
                 if (infos != null) {
-                    Set<EntityScore> score = new TreeSet<>(
-                            ranker.getTopKEntities(
-                                    infos,
-                                    context,
-                                    query,
-                                    (j - i),
-                                    candidatesPerSpot
-                            )
-                    );
+                    Set<EntityScore> entityScores = new HashSet<>(ranker.getTopKEntities(
+                            infos,
+                            context,
+                            query,
+                            (j - i),
+                            candidatesPerSpot
+                    ));
                     Span span = new Span(text.toString(), i, j);
-                    candidatesAnnotations.putAll(span, score);
+                    if (entityScores.size() > 0) {
+                        candidatesAnnotations.putAll(span, entityScores);
+                    }
                 }
                 text.append(" ");
             }
